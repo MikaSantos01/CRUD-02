@@ -1,27 +1,52 @@
 <?php
+if (session_status() === PHP_SESSION_NONE) {
+    session_start();
+}
+
+ini_set('display_errors', 1);
+ini_set('display_startup_errors', 1);
+error_reporting(E_ALL);
+
 require_once 'db.php';
 require_once 'authenticate.php';
 
-// Obter médicos e pacientes para preencher o formulário
-$medicos = $pdo->query("SELECT id, nome FROM medicos")->fetchAll(PDO::FETCH_ASSOC);
-$pacientes = $pdo->query("SELECT id, nome FROM pacientes")->fetchAll(PDO::FETCH_ASSOC);
+// Buscar médicos e pacientes
+$medicos = $pdo->query("SELECT id, nome FROM medico")->fetchAll(PDO::FETCH_ASSOC);
+$pacientes = $pdo->query("SELECT id, nome FROM paciente")->fetchAll(PDO::FETCH_ASSOC);
 
-if ($_SERVER['REQUEST_METHOD'] == 'POST') {
-    $data_hora = $_POST['data_hora'];
+$erro = '';
+
+if ($_SERVER['REQUEST_METHOD'] === 'POST') {
+    $data_hora_raw = $_POST['data_hora'];
+    $data_hora = str_replace('T', ' ', $data_hora_raw) . ':00';
     $paciente_id = $_POST['paciente_id'];
     $medico_id = $_POST['medico_id'];
+    $observacoes = $_POST['observacoes'] ?? '';
 
-    $stmt = $pdo->prepare("INSERT INTO consultas (data_hora, paciente_id, medico_id) VALUES (?, ?, ?)");
-    $stmt->execute([$data_hora, $paciente_id, $medico_id]);
+    // Verifica duplicidade
+    $stmt = $pdo->prepare("SELECT COUNT(*) FROM consulta WHERE id_medico = ? AND id_paciente = ? AND data_hora = ?");
+    $stmt->execute([$medico_id, $paciente_id, $data_hora]);
+    $existe = $stmt->fetchColumn();
 
-    header('Location: index-consulta.php');
+    if ($existe) {
+        $erro = "Já existe uma consulta nesse horário para esse médico e paciente.";
+    } else {
+        try {
+            $stmt = $pdo->prepare("INSERT INTO consulta (id_medico, id_paciente, data_hora, observacoes) VALUES (?, ?, ?, ?)");
+            $stmt->execute([$medico_id, $paciente_id, $data_hora, $observacoes]);
+            header('Location: index-consulta.php');
+            exit;
+        } catch (PDOException $e) {
+            $erro = "Erro ao inserir consulta: " . $e->getMessage();
+        }
+    }
 }
 ?>
 
 <!DOCTYPE html>
 <html lang="pt-BR">
 <head>
-    <meta charset="UTF-8">
+    <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Agendar Consulta</title>
     <link rel="stylesheet" href="../css/style.css">
@@ -31,18 +56,18 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
         <h1>Agendar Consulta</h1>
         <nav>
             <ul>
-                <li><a href="index.php">Home</a></li>
+                <li><a href="index-consulta.php">Home</a></li>
                 <?php if (isset($_SESSION['user_id'])): ?>
-                    <li>Pacientes:
-                        <a href="/php/create-paciente.php">Adicionar</a> |
+                    <li>Pacientes: 
+                        <a href="/php/create-paciente.php">Adicionar</a> | 
                         <a href="/php/index-paciente.php">Listar</a>
                     </li>
-                    <li>Médicos:
-                        <a href="/php/create-medico.php">Adicionar</a> |
+                    <li>Médicos: 
+                        <a href="/php/create-medico.php">Adicionar</a> | 
                         <a href="/php/index-medico.php">Listar</a>
                     </li>
-                    <li>Consultas:
-                        <a href="/php/create-consulta.php">Agendar</a> |
+                    <li>Consultas: 
+                        <a href="/php/create-consulta.php">Agendar</a> | 
                         <a href="/php/index-consulta.php">Listar</a>
                     </li>
                     <li><a href="/php/logout.php">Logout (<?= $_SESSION['username'] ?>)</a></li>
@@ -55,6 +80,10 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
     </header>
 
     <main>
+        <?php if (!empty($erro)): ?>
+            <p style="color: red;"><?= htmlspecialchars($erro) ?></p>
+        <?php endif; ?>
+
         <form method="POST">
             <label for="data_hora">Data e Hora:</label>
             <input type="datetime-local" id="data_hora" name="data_hora" required>
@@ -75,7 +104,10 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
                 <?php endforeach; ?>
             </select>
 
-            <button type="submit">Agendar Consulta</button>
+            <label for="observacoes">Observações:</label>
+            <textarea id="observacoes" name="observacoes" rows="4"></textarea>
+
+            <button type="submit">Agendar</button>
         </form>
     </main>
 </body>

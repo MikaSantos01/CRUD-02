@@ -14,7 +14,7 @@ session_start();
         <h1>Clínica Médica Viva Saúde</h1>
         <nav>
             <ul>
-                <li><a href="index.php">Home</a></li>
+                <li><a href="../index.php">Home</a></li>
                 <?php if (isset($_SESSION['user_id'])): ?>
                     <li>Médico: 
                         <a href="/php/create-paciente.php">Adicionar</a> | 
@@ -25,13 +25,13 @@ session_start();
                         <a href="/php/index-medico.php">Listar</a>
                     </li>
                     <li>Consulta: 
-                        <a href="/php/create-consulta.php">Adicionar</a> | 
+                        <a href="/php/agendar-consulta.php">Adicionar</a> | 
                         <a href="/php/index-consulta.php">Listar</a>
                     </li>
                     <li><a href="/php/logout.php">Logout (<?= $_SESSION['username'] ?>)</a></li>
                 <?php else: ?>
                     <li><a href="/php/user-login.php">Login</a></li>
-                    <li><a href="/php/user-register.php">Registrar</a></li>
+                    <li><a href="php/user-register.php">Registrar</a></li>
                 <?php endif; ?>
             </ul>
         </nav>

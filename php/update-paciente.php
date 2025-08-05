@@ -1,4 +1,8 @@
 <?php
+if (session_status() === PHP_SESSION_NONE) {
+    session_start();
+}
+
 require_once 'db.php';
 require_once 'authenticate.php';
 
@@ -10,7 +14,7 @@ if (!$id) {
 }
 
 // Seleciona o paciente pelo ID
-$stmt = $pdo->prepare("SELECT * FROM pacientes WHERE id = ?");
+$stmt = $pdo->prepare("SELECT * FROM paciente WHERE id = ?");
 $stmt->execute([$id]);
 $paciente = $stmt->fetch(PDO::FETCH_ASSOC);
 
@@ -19,20 +23,16 @@ if (!$paciente) {
     exit;
 }
 
-// Buscar usuários para associar ao paciente
-$usuarios = $pdo->query("SELECT id, username FROM usuarios")->fetchAll(PDO::FETCH_ASSOC);
-
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     $nome = $_POST['nome'];
-    $cpf = $_POST['cpf'];
     $dataNascimento = $_POST['data_nascimento'];
-    $usuario_id = $_POST['usuario_id'];
+    $tipoSanguineo = $_POST['tipo_sanguineo'];
 
-    // Atualiza o paciente no banco
-    $stmt = $pdo->prepare("UPDATE pacientes SET nome = ?, cpf = ?, data_nascimento = ?, usuario_id = ? WHERE id = ?");
-    $stmt->execute([$nome, $cpf, $dataNascimento, $usuario_id, $id]);
+    // Atualiza o paciente
+    $stmt = $pdo->prepare("UPDATE paciente SET nome = ?, data_nascimento = ?, tipo_sanguineo = ? WHERE id = ?");
+    $stmt->execute([$nome, $dataNascimento, $tipoSanguineo, $id]);
 
-    header("Location: read-paciente.php?id=$id");
+    header("Location: index-paciente.php");
     exit;
 }
 ?>
@@ -50,7 +50,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     <h1>Editar Paciente</h1>
     <nav>
         <ul>
-            <li><a href="index.php">Home</a></li>
+            <li><a href="index-paciente.php">Home</a></li>
             <?php if (isset($_SESSION['user_id'])): ?>
                 <li>Pacientes: 
                     <a href="/php/create-paciente.php">Adicionar</a> | 
@@ -62,7 +62,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 </li>
                 <li>Consultas: 
                     <a href="/php/create-consulta.php">Agendar</a> | 
-                    <a href="/php/index-consulta.php">Ver todas</a>
+                    <a href="/php/index-consulta.php">Listar</a>
                 </li>
                 <li><a href="/php/logout.php">Logout (<?= htmlspecialchars($_SESSION['username']) ?>)</a></li>
             <?php else: ?>
@@ -72,28 +72,19 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         </ul>
     </nav>
 </header>
+
 <main>
     <form method="POST">
         <label for="nome">Nome:</label>
-        <input type="text" id="nome" name="nome" value="<?= htmlspecialchars($paciente['nome']) ?>" required>
-
-        <label for="cpf">CPF:</label>
-        <input type="text" id="cpf" name="cpf" value="<?= htmlspecialchars($paciente['cpf']) ?>" required>
+        <input type="text" id="nome" name="nome" value="<?= htmlspecialchars($paciente['nome']) ?>" required />
 
         <label for="data_nascimento">Data de Nascimento:</label>
-        <input type="date" id="data_nascimento" name="data_nascimento" value="<?= htmlspecialchars($paciente['data_nascimento']) ?>" required>
+        <input type="date" id="data_nascimento" name="data_nascimento" value="<?= htmlspecialchars($paciente['data_nascimento']) ?>" required />
 
-        <label for="usuario_id">Usuário:</label>
-        <select id="usuario_id" name="usuario_id" required>
-            <option value="">Selecione o usuário</option>
-            <?php foreach ($usuarios as $usuario): ?>
-                <option value="<?= $usuario['id'] ?>" <?= $usuario['id'] == $paciente['usuario_id'] ? 'selected' : '' ?>>
-                    <?= htmlspecialchars($usuario['username']) ?>
-                </option>
-            <?php endforeach; ?>
-        </select>
+        <label for="tipo_sanguineo">Tipo Sanguíneo:</label>
+        <input type="text" id="tipo_sanguineo" name="tipo_sanguineo" value="<?= htmlspecialchars($paciente['tipo_sanguineo']) ?>" required maxlength="3" />
 
-        <button type="submit">Atualizar</button>
+        <button type="submit">Salvar</button>
     </form>
 </main>
 </body>

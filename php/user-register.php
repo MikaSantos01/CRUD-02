@@ -5,7 +5,7 @@ $message = '';
 
 if ($_SERVER['REQUEST_METHOD'] == 'POST') {
     $username = $_POST['username'];
-    $password = password_hash($_POST['password'], PASSWORD_BCRYPT); // Criptografa a senha
+    $password = password_hash($_POST['password'], PASSWORD_BCRYPT); 
 
     // Verifica se o nome de usuário já existe
     $stmt = $pdo->prepare("SELECT * FROM usuarios WHERE username = ?");

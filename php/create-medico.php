@@ -32,7 +32,7 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
         <h1>Adicionar Médico</h1>
         <nav>
             <ul>
-                <li><a href="index.php">Home</a></li>
+                <li><a href="index-medico.php">Home</a></li>
                 <?php if (isset($_SESSION['user_id'])): ?>
                     <li>Pacientes: 
                         <a href="/php/create-paciente.php">Adicionar</a> | 

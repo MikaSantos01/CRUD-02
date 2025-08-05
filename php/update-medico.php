@@ -27,12 +27,13 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     $especialidade = $_POST['especialidade'];
 
     // Atualizar o médico no banco
-    $stmt = $pdo->prepare("UPDATE medicos SET nome = ?, especialidade = ?, WHERE id = ?");
+    $stmt = $pdo->prepare("UPDATE medico SET nome = ?, especialidade = ? WHERE id = ?");
     $stmt->execute([$nome, $especialidade, $id]);
 
     header("Location: read-medico.php?id=$id");
     exit;
 }
+
 ?>
 
 <!DOCTYPE html>
@@ -48,7 +49,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     <h1>Editar Médico</h1>
     <nav>
         <ul>
-            <li><a href="index.php">Home</a></li>
+            <li><a href="index-medico.php">Home</a></li>
             <?php if (isset($_SESSION['user_id'])): ?>
                 <li>Pacientes: 
                     <a href="/php/create-paciente.php">Adicionar</a> | 
