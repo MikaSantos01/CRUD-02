@@ -21,7 +21,7 @@ $pacientes = $stmt->fetchAll(PDO::FETCH_ASSOC);
         <h1>Lista de Pacientes</h1>
         <nav>
             <ul>
-                <li><a href="index.php">Home</a></li>
+                <li><a href="../index.php">Home</a></li>
                 <?php if (isset($_SESSION['user_id'])): ?>
                     <li>Pacientes: 
                         <a href="/php/create-paciente.php">Adicionar</a> | 

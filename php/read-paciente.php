@@ -17,7 +17,12 @@ if (!$id) {
     exit;
 }
 
-$stmt = $pdo->prepare("SELECT * FROM paciente WHERE id = ?");
+$stmt = $pdo->prepare("
+    SELECT p.*, i.path AS imagem_path
+    FROM paciente p
+    LEFT JOIN imagens i ON p.imagem_id = i.id
+    WHERE p.id = ?
+");
 $stmt->execute([$id]);
 $paciente = $stmt->fetch(PDO::FETCH_ASSOC);
 ?>
@@ -64,6 +69,12 @@ $paciente = $stmt->fetch(PDO::FETCH_ASSOC);
             <p><strong>Nome:</strong> <?= htmlspecialchars($paciente['nome']) ?></p>
             <p><strong>Data de Nascimento:</strong> <?= htmlspecialchars($paciente['data_nascimento']) ?></p>
             <p><strong>Tipo Sanguíneo:</strong> <?= htmlspecialchars($paciente['tipo_sanguineo']) ?></p>
+
+            <?php if (!empty($paciente['imagem_path'])): ?>
+                <p><strong>Imagem:</strong></p>
+                <img src="../images/<?= htmlspecialchars($paciente['imagem_path']) ?>" alt="Imagem do paciente" style="max-width: 200px;">
+            <?php endif; ?>
+
             <p>
                 <a href="update-paciente.php?id=<?= urlencode($paciente['id']) ?>">Editar</a> |
                 <a href="delete-paciente.php?id=<?= urlencode($paciente['id']) ?>" onclick="return confirm('Tem certeza que deseja excluir este paciente?');">Excluir</a> |

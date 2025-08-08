@@ -13,7 +13,7 @@ if (!$id) {
     exit;
 }
 
-// Seleciona o paciente pelo ID
+// Buscar paciente atual
 $stmt = $pdo->prepare("SELECT * FROM paciente WHERE id = ?");
 $stmt->execute([$id]);
 $paciente = $stmt->fetch(PDO::FETCH_ASSOC);
@@ -27,10 +27,25 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     $nome = $_POST['nome'];
     $dataNascimento = $_POST['data_nascimento'];
     $tipoSanguineo = $_POST['tipo_sanguineo'];
+    $imagem_id = $paciente['imagem_id'];
 
-    // Atualiza o paciente
-    $stmt = $pdo->prepare("UPDATE paciente SET nome = ?, data_nascimento = ?, tipo_sanguineo = ? WHERE id = ?");
-    $stmt->execute([$nome, $dataNascimento, $tipoSanguineo, $id]);
+    // Se o usuário enviou nova imagem
+    if (!empty($_FILES['imagem']['name'])) {
+        $extensao = pathinfo($_FILES['imagem']['name'], PATHINFO_EXTENSION);
+        $novoNome = uniqid() . '.' . $extensao;
+        $caminho = __DIR__ . '/../images/' . $novoNome;
+
+        if (move_uploaded_file($_FILES['imagem']['tmp_name'], $caminho)) {
+            // Insere nova imagem
+            $stmt = $pdo->prepare("INSERT INTO imagens (path) VALUES (?)");
+            $stmt->execute([$novoNome]);
+            $imagem_id = $pdo->lastInsertId();
+        }
+    }
+
+    // Atualiza paciente com nova imagem (ou mantém a anterior)
+    $stmt = $pdo->prepare("UPDATE paciente SET nome = ?, data_nascimento = ?, tipo_sanguineo = ?, imagem_id = ? WHERE id = ?");
+    $stmt->execute([$nome, $dataNascimento, $tipoSanguineo, $imagem_id, $id]);
 
     header("Location: index-paciente.php");
     exit;
@@ -74,7 +89,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 </header>
 
 <main>
-    <form method="POST">
+    <form method="POST" enctype="multipart/form-data">
         <label for="nome">Nome:</label>
         <input type="text" id="nome" name="nome" value="<?= htmlspecialchars($paciente['nome']) ?>" required />
 
@@ -83,6 +98,9 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 
         <label for="tipo_sanguineo">Tipo Sanguíneo:</label>
         <input type="text" id="tipo_sanguineo" name="tipo_sanguineo" value="<?= htmlspecialchars($paciente['tipo_sanguineo']) ?>" required maxlength="3" />
+
+        <label for="imagem">Nova Imagem (opcional):</label>
+        <input type="file" id="imagem" name="imagem" accept="image/*">
 
         <button type="submit">Salvar</button>
     </form>

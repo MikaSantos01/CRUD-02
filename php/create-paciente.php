@@ -1,4 +1,9 @@
 <?php
+// Exibir erros na tela (apenas para desenvolvimento)
+ini_set('display_errors', 1);
+ini_set('display_startup_errors', 1);
+error_reporting(E_ALL);
+
 if (session_status() === PHP_SESSION_NONE) {
     session_start();
 }
@@ -10,9 +15,25 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     $nome = $_POST['nome'];
     $dataNascimento = $_POST['data_nascimento'];
     $tipoSanguineo = $_POST['tipo_sanguineo'];
+    $imagem_id = null;
 
-    $stmt = $pdo->prepare("INSERT INTO paciente (nome, data_nascimento, tipo_sanguineo) VALUES (?, ?, ?)");
-    $stmt->execute([$nome, $dataNascimento, $tipoSanguineo]);
+    // Verifica se uma imagem foi enviada
+    if (!empty($_FILES['imagem']['name'])) {
+        $extensao = pathinfo($_FILES['imagem']['name'], PATHINFO_EXTENSION);
+        $novoNome = uniqid() . '.' . $extensao;
+        $caminho = __DIR__ . '/../images/' . $novoNome;
+
+        // Move a imagem para o diretório
+        if (move_uploaded_file($_FILES['imagem']['tmp_name'], $caminho)) {
+            $stmt = $pdo->prepare("INSERT INTO imagens (path) VALUES (?)");
+            $stmt->execute([$novoNome]);
+            $imagem_id = $pdo->lastInsertId();
+        }
+    }
+
+    // Insere o paciente com ou sem imagem
+    $stmt = $pdo->prepare("INSERT INTO paciente (nome, data_nascimento, tipo_sanguineo, imagem_id) VALUES (?, ?, ?, ?)");
+    $stmt->execute([$nome, $dataNascimento, $tipoSanguineo, $imagem_id]);
 
     header('Location: index-paciente.php');
     exit();
@@ -56,7 +77,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     </header>
 
     <main>
-        <form method="POST">
+        <!-- enctype é essencial para upload -->
+        <form method="POST" enctype="multipart/form-data">
             <label for="nome">Nome:</label>
             <input type="text" id="nome" name="nome" required />
 
@@ -72,6 +94,9 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 maxlength="3"
                 placeholder="Ex: A+, O-"
             />
+
+            <label for="imagem">Imagem de Perfil:</label>
+            <input type="file" id="imagem" name="imagem" accept="image/*">
 
             <button type="submit">Adicionar</button>
         </form>
