@@ -33,7 +33,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     if (!empty($_FILES['imagem']['name'])) {
         $extensao = pathinfo($_FILES['imagem']['name'], PATHINFO_EXTENSION);
         $novoNome = uniqid() . '.' . $extensao;
-        $caminho = __DIR__ . '/../images/' . $novoNome;
+        $caminho = __DIR__ . '/../storege/' . $novoNome;
 
         if (move_uploaded_file($_FILES['imagem']['tmp_name'], $caminho)) {
             // Insere nova imagem

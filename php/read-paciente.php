@@ -25,6 +25,13 @@ $stmt = $pdo->prepare("
 ");
 $stmt->execute([$id]);
 $paciente = $stmt->fetch(PDO::FETCH_ASSOC);
+
+if ($paciente['imagem_path']) {
+    $imagemPath = '/../storege/' . $paciente['imagem_path'];
+} else {
+    $imagemPath = '/../storege/profile.jpg'; // Imagem padrão
+}
+
 ?>
 
 <!DOCTYPE html>
@@ -65,15 +72,13 @@ $paciente = $stmt->fetch(PDO::FETCH_ASSOC);
 
     <main>
         <?php if ($paciente): ?>
+
             <p><strong>ID:</strong> <?= htmlspecialchars($paciente['id']) ?></p>
             <p><strong>Nome:</strong> <?= htmlspecialchars($paciente['nome']) ?></p>
             <p><strong>Data de Nascimento:</strong> <?= htmlspecialchars($paciente['data_nascimento']) ?></p>
             <p><strong>Tipo Sanguíneo:</strong> <?= htmlspecialchars($paciente['tipo_sanguineo']) ?></p>
 
-            <?php if (!empty($paciente['imagem_path'])): ?>
-                <p><strong>Imagem:</strong></p>
-                <img src="../images/<?= htmlspecialchars($paciente['imagem_path']) ?>" alt="Imagem do paciente" style="max-width: 200px;">
-            <?php endif; ?>
+            <img src="<?= $imagemPath ?>" alt="Imagem de Perfil" style="width: 150px; height: 150px;">
 
             <p>
                 <a href="update-paciente.php?id=<?= urlencode($paciente['id']) ?>">Editar</a> |
